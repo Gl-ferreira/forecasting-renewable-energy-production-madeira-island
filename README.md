@@ -57,7 +57,7 @@ synthetic_data_repo/
 │       ├── scalers/                           # Fitted scikit-learn scalers (joblib)
 │       └── final/                             # Output of pipeline/05
 │           └── <target>/{model.joblib, metrics.json, line_chart.png, shap_beeswarm.png}
-├── real_results/                     # Real-data charts from the published manuscript (see 5.2)
+├── real_results/                     # Real-data charts from the published manuscript (see section 5)
 │   └── <target>/{line_chart.png, shap_beeswarm.png}
 ├── pipeline/
 │   ├── 01_merge_data.py              # Merge production + weather
@@ -99,11 +99,9 @@ The thesis evaluated LSTM, MLP, Random Forest, and XGBoost across two rounds of 
 
 The feature importance lists in `data/processed/<target>_xgb_importance.csv` include `Fossil` and `Natural Gas` generation among the selected features for Wind and Biomass (and, just below Solar's threshold, for Solar too). This is a property of the synthetic data, not a physically meaningful relationship: the generator drives all production columns from broadly similar seasonal and calendar signals, which creates spurious cross-correlations between unrelated energy sources that wouldn't exist in, and aren't present in, the real data's feature-selection results reported in the manuscript.
 
-## 5. Results
+### 4.4 Sanity check: pipeline output on synthetic data
 
-### 5.1 From this repo (synthetic data)
-
-For transparency, here are the final-round metrics this pipeline produces when run on the synthetic data (see `data/processed/final/final_summary.csv`). <u>These are not, and shouldn't be read as, the manuscript's results</u>, see section 2 for why.
+The real data can't be shared (section 2), so there's no way to hand someone the actual EEM dataset to confirm this code works. Running it end to end on the included synthetic data instead at least proves it executes, each step produces output of the right shape, and the final step trains and evaluates a model. For reference, here's what that run produces (see `data/processed/final/final_summary.csv`). <u>These numbers carry no scientific meaning</u> — they're an artifact of the synthetic generator, not a result to compare against the real work; see section 5 for the real published metrics.
 
 | Target | Model | R² | RMSE | MAE | MAPE |
 |---|---|---|---|---|---|
@@ -125,9 +123,9 @@ For transparency, here are the final-round metrics this pipeline produces when r
 
 Each target's folder under `data/processed/final/` also has a SHAP beeswarm plot (`shap_beeswarm.png`) showing which features actually drove that model's predictions on the synthetic data.
 
-### 5.2 From the published work (real data)
+## 5. Results
 
-For comparison, these are the actual final-round results reported in the manuscript (Table 4), trained and evaluated on the real, confidential EEM production and weather data described in section 2. They aren't reproducible from this repo (see section 2 for why), and are included here for reference, not as something this pipeline's synthetic run is expected to match.
+The final-round metrics reported in the manuscript (Table 4), trained and evaluated on the real, confidential EEM production and weather data described in section 2. <u>These are the actual published results</u> — not reproducible from this repo (section 2 explains why the real data isn't included); section 4.4 has a synthetic-data sanity check of the pipeline itself instead.
 
 | RES | Model | MAE (MWh) | RMSE (MWh) | R² |
 |---|---|---|---|---|
