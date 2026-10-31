@@ -107,7 +107,7 @@ If you use this code or the synthetic datasets, please cite the published manusc
 
 I'm Gonçalo Ferreira, a data analyst based in Lisbon, working toward becoming a stronger full-stack data scientist / ML engineer. This project is where that direction started: taking a real operational problem for an island utility, building and rigorously comparing several ML approaches against it, and following the work through to a peer-reviewed submission rather than leaving it in a thesis drawer.
 
-[ADD LINK: your LinkedIn] · [ADD LINK: your portfolio/personal site, if you have one] · [ADD LINK: your master's thesis, if publicly available]
+[Master's thesis (open access, NOVA IMS)](https://run.unl.pt/entities/publication/21a7783f-52e1-4096-a626-2cc963cef5d9) · [ADD LINK: your LinkedIn] · [ADD LINK: your portfolio/personal site, if you have one]
 
 ## Contact
 
