@@ -103,12 +103,12 @@ The feature importance lists in `data/processed/<target>_xgb_importance.csv` inc
 
 The real data can't be shared (section 2), so there's no way to hand someone the actual EEM dataset to confirm this code works. Running it end to end on the included synthetic data instead at least proves it executes, each step produces output of the right shape, and the final step trains and evaluates a model. For reference, here's what that run produces (see `data/processed/final/final_summary.csv`). <u>These numbers carry no scientific meaning</u> — they're an artifact of the synthetic generator, not a result to compare against the real work; see section 5 for the real published metrics.
 
-| Target | Model | R² | RMSE | MAE | MAPE |
-|---|---|---|---|---|---|
-| Solar | Random Forest | 0.951 | 2.35 | 1.88 | n/a |
-| Wind | XGBoost | 0.756 | 14.19 | 11.12 | 3.23% |
-| Hydropower | XGBoost | 0.951 | 13.99 | 10.74 | 5.92% |
-| Biomass | Random Forest | 0.876 | 2.68 | 2.06 | n/a |
+| Target | Model | R² | RMSE | MAE |
+|---|---|---|---|---|
+| Solar | Random Forest | 0.951 | 2.35 | 1.88 |
+| Wind | XGBoost | 0.756 | 14.19 | 11.12 |
+| Hydropower | XGBoost | 0.951 | 13.99 | 10.74 |
+| Biomass | Random Forest | 0.876 | 2.68 | 2.06 |
 
 <table>
 <tr>
