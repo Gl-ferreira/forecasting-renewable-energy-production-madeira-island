@@ -1,0 +1,13 @@
+{
+  "model": "rf",
+  "params": {
+    "n_estimators": 120,
+    "max_depth": 8,
+    "min_samples_split": 6,
+    "random_state": 42
+  },
+  "rmse": 2.345459462131077,
+  "mae": 1.8787946303170406,
+  "r2": 0.9505108013435942,
+  "shap_plot_saved": true
+}

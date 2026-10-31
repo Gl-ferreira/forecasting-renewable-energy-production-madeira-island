@@ -1,0 +1,16 @@
+{
+  "model": "xgb",
+  "params": {
+    "n_estimators": 100,
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "random_state": 42
+  },
+  "rmse": 14.191307867639988,
+  "mae": 11.11984920501709,
+  "r2": 0.7555395364761353,
+  "mape": 3.234083890914917,
+  "nmae": 0.030831399223882658,
+  "nrmse": 0.03934746508782022,
+  "shap_plot_saved": true
+}

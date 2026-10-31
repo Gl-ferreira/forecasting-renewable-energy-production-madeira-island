@@ -1,0 +1,9 @@
+# Dependencies for the synthetic-data preprocessing + modeling pipeline
+# (01_merge_data.py -> 02_preprocess.py -> 03_feature_engineering.py -> 04_scale_and_select.py -> 05_train_final_models.py)
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+xgboost>=2.0
+joblib>=1.3
+matplotlib>=3.7
+shap>=0.44

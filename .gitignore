@@ -1,0 +1,11 @@
+# Redundant download artifacts (exact duplicates of data/processed/ and data/processed/final/,
+# produced when results were pulled back from Colab). Not needed in the repo.
+final_results.zip
+processed_results.zip
+
+# Standard junk
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
