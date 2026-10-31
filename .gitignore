@@ -9,3 +9,8 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 Thumbs.db
+
+# Intermediate pipeline output: regenerated in seconds by running
+# pipeline/01-04 locally. Only the final results are worth keeping in git.
+data/processed/*
+!data/processed/final
