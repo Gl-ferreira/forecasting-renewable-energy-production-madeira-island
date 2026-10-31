@@ -57,6 +57,8 @@ synthetic_data_repo/
 │       ├── scalers/                           # Fitted scikit-learn scalers (joblib)
 │       └── final/                             # Output of pipeline/05
 │           └── <target>/{model.joblib, metrics.json, line_chart.png, shap_beeswarm.png}
+├── real_results/                     # Real-data charts from the published manuscript (see 5.2)
+│   └── <target>/{line_chart.png, shap_beeswarm.png}
 ├── pipeline/
 │   ├── 01_merge_data.py              # Merge production + weather
 │   ├── 02_preprocess.py              # Cleaning, DST alignment, resampling
@@ -65,7 +67,7 @@ synthetic_data_repo/
 │   ├── 05_train_final_models.py      # Final-round model training + SHAP
 │   └── requirements.txt
 └── colab/
-    └── synthetic_data_repo_real_xgboost.ipynb   # Colab runner for 04 and 05 (see 5.2)
+    └── synthetic_data_repo_real_xgboost.ipynb   # Colab runner for 04 and 05 (see 4.2)
 ```
 
 ## 4. Pipeline
@@ -99,6 +101,8 @@ The feature importance lists in `data/processed/<target>_xgb_importance.csv` inc
 
 ## 5. Results
 
+### 5.1 From this repo (synthetic data)
+
 For transparency, here are the final-round metrics this pipeline produces when run on the synthetic data (see `data/processed/final/final_summary.csv`). <u>These are not, and shouldn't be read as, the manuscript's results</u>, see section 2 for why.
 
 | Target | Model | R² | RMSE | MAE | MAPE |
@@ -120,6 +124,39 @@ For transparency, here are the final-round metrics this pipeline produces when r
 </table>
 
 Each target's folder under `data/processed/final/` also has a SHAP beeswarm plot (`shap_beeswarm.png`) showing which features actually drove that model's predictions on the synthetic data.
+
+### 5.2 From the published work (real data)
+
+For comparison, these are the actual final-round results reported in the manuscript (Table 4), trained and evaluated on the real, confidential EEM production and weather data described in section 2. They aren't reproducible from this repo (see section 2 for why), and are included here for reference, not as something this pipeline's synthetic run is expected to match.
+
+| RES | Model | MAE (MWh) | RMSE (MWh) | R² |
+|---|---|---|---|---|
+| Solar | Random Forest | 12.9 | 15.7 | 0.33 |
+| Wind | XGBoost | 142.8 | 187.9 | 0.68 |
+| Hydropower | XGBoost | 27.2 | 42.2 | 0.95 |
+| Biomass | Random Forest | 8.8 | 16.9 | 0.75 |
+
+<table>
+<tr>
+<td><img src="real_results/solar/line_chart.png" width="400"></td>
+<td><img src="real_results/wind/line_chart.png" width="400"></td>
+</tr>
+<tr>
+<td><img src="real_results/hydropower/line_chart.png" width="400"></td>
+<td><img src="real_results/biomass/line_chart.png" width="400"></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td><img src="real_results/solar/shap_beeswarm.png" width="400"></td>
+<td><img src="real_results/wind/shap_beeswarm.png" width="400"></td>
+</tr>
+<tr>
+<td><img src="real_results/hydropower/shap_beeswarm.png" width="400"></td>
+<td><img src="real_results/biomass/shap_beeswarm.png" width="400"></td>
+</tr>
+</table>
 
 ## 6. License
 
