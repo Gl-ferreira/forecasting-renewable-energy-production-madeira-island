@@ -6,17 +6,17 @@ production forecasts right matters more here than almost anywhere else in
 Europe. This script exists so that part of the story can be reproduced and
 run by anyone, without me having to hand over EEM's real, confidential data.
 
-Produces data that is STRUCTURALLY AND STATISTICALLY SIMILAR to the real,
+Produces data that's structurally and statistically similar to the real,
 proprietary EEM production dataset and the Visual Crossing weather dataset
-used in the published study — same shape, timestamps, column names, rough
-seasonality/diurnal patterns, skew, and missing-value patterns — but every
+used in the published study (same shape, timestamps, column names, rough
+seasonality/diurnal patterns, skew, missing-value patterns), but every
 value is synthetically generated. No real record, row, or cell from the
-original datasets is reproduced anywhere in this script or its output.
+original datasets shows up anywhere in this script or its output.
 
-Calibration targets (profiled read-only from the real data on 2026-10-16,
-not reproduced here beyond aggregate statistics already consistent with
-what is publicly stated in the published manuscript, e.g. seasonal shares,
-installed capacity, variable lists, and skewness/outlier/missingness rates):
+Calibration targets, profiled read-only from the real data on 2026-10-16.
+Nothing below goes beyond aggregate statistics already consistent with
+what's publicly stated in the published manuscript (seasonal shares,
+installed capacity, variable lists, skewness/outlier/missingness rates):
   - Production: 128,540 rows, 15-min resolution, 2021-01-01..2024-08-31,
     6 energy sources + capacities, Hydropower missing all of Nov 2021,
     DST duplicate/missing timestamps on the documented dates.
@@ -37,8 +37,8 @@ RNG = np.random.default_rng(42)
 # Production (EEM) synthetic generator
 # ---------------------------------------------------------------------------
 
-# Real per-year installed capacities (already public — reported in the
-# published manuscript's Fig. 2, not proprietary production records).
+# Real per-year installed capacities. Already public, reported in the
+# published manuscript's Fig. 2, not proprietary production records.
 CAPACITY_BY_YEAR = {
     2021: dict(Wind=63.11, Hydropower=79.0, Solar=15, Biomass=9, Fossil=170.0, NaturalGas=56),
     2022: dict(Wind=63.10, Hydropower=79.0, Solar=15, Biomass=9, Fossil=170.0, NaturalGas=56),
@@ -68,9 +68,9 @@ WIND_DIURNAL = 1.0 - 0.18 * np.sin((HOURS - 13) / 12 * np.pi)
 def skewed_series(n, mean, std, skew, rng, floor=None):
     """Generate a right- or left-skewed series with the requested mean/std,
     using a shifted/scaled gamma (right skew) or mirrored gamma (left skew).
-    floor=None leaves the series unclipped (use this for a zero-centred
-    noise term meant to be added to a separate deterministic base — clip
-    only the final combined series, not the noise itself)."""
+    floor=None leaves the series unclipped. Use that for a zero-centred
+    noise term meant to be added to a separate deterministic base, and clip
+    only the final combined series, not the noise itself."""
     skew = np.clip(skew, -6, 6)
     if abs(skew) < 0.05:
         x = rng.normal(mean, std, n)

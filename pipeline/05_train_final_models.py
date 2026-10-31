@@ -1,62 +1,62 @@
 """
 05_train_final_models.py
-=========================
 
 Step 5, the payoff: trains the final model for each of the four renewable
 sources and explains its predictions with SHAP, so the output is something
 a grid operator could actually trust, not just a black-box number.
-Reproduces notebook sections 3.3 (Final Round) and 3.4 (Proposal of the best
-model), cells ~207-222 of `data_preprocessing_and_modeling.ipynb`
-(`COPY -Final code/preprocessing/`, read-only), on the synthetic data.
+Reproduces notebook sections 3.3 (Final Round) and 3.4 (Proposal of the
+best model), roughly cells 207-222 of
+`data_preprocessing_and_modeling.ipynb` (`COPY -Final code/preprocessing/`,
+read-only), run here on the synthetic data.
 
-WHICH MODEL PER TARGET (do not change without re-reading the source notebook):
-Cell 190: LSTM was eliminated after round 1 ("the worst model" - deep
-learning needs more data than this study has). Cell 206: MLP was eliminated
-after round 2 (SHAP is slow/approximate for MLPs, fast/exact for tree
-models). Cell 220, verbatim: "XGBoost was the top performer for Hydropower
-and Wind, whereas Random Forest performed better for Solar and Biomass.
-Therefore, the optimal solution is a hybrid one, using XGBoost for
-Hydropower and Wind, and Random Forest for Solar and Biomass." That is the
-published methodology this script reproduces - NOT the stray
-`lstm_daily_lb14_final.h5` files found under `modeling/final/solar` and
-`modeling/final/wind` on disk, which appear to be an earlier/abandoned
-experiment and contradict the notebook's own narrative text. The notebook's
-markdown conclusion is the source of truth here, not leftover files.
+Which model goes with which target isn't something to change without
+re-reading the source notebook first. LSTM was eliminated after round 1
+(cell 190: "the worst model", not enough data for deep learning to be
+competitive here), and MLP was eliminated after round 2 (cell 206: SHAP is
+slow and only approximate for MLPs, fast and exact for tree models). Cell
+220 states the conclusion verbatim: "XGBoost was the top performer for
+Hydropower and Wind, whereas Random Forest performed better for Solar and
+Biomass. Therefore, the optimal solution is a hybrid one, using XGBoost for
+Hydropower and Wind, and Random Forest for Solar and Biomass." That
+published methodology is what this script reproduces, not the stray
+`lstm_daily_lb14_final.h5` files sitting under `modeling/final/solar` and
+`modeling/final/wind` on disk, which look like leftovers from an earlier,
+abandoned experiment and contradict the notebook's own narrative text. The
+notebook's markdown conclusion is the source of truth here, not whatever
+files happen to still be lying around.
 
-Hyperparameters (grid-search winners, verbatim from cells 213 and 217):
-  XGBoost:
-    wind:       n_estimators=100, max_depth=3, learning_rate=0.05
-    hydropower: n_estimators=200, max_depth=3, learning_rate=0.05
-  Random Forest:
-    solar:   n_estimators=120, max_depth=8,  min_samples_split=6
-    biomass: n_estimators=100, max_depth=10, min_samples_split=4
-  Both: random_state=42, n_jobs=-1 (matching the notebook's defaults).
+Hyperparameters are the grid-search winners, taken verbatim from cells 213
+and 217: for XGBoost, wind uses n_estimators=100, max_depth=3,
+learning_rate=0.05, and hydropower uses n_estimators=200, max_depth=3,
+learning_rate=0.05; for Random Forest, solar uses n_estimators=120,
+max_depth=8, min_samples_split=6, and biomass uses n_estimators=100,
+max_depth=10, min_samples_split=4. Both model types use random_state=42,
+n_jobs=-1, matching the notebook's defaults.
 
-For each of the 4 targets, this script:
-  1. Loads `<target>_trainval.csv` / `<target>_test_tv.csv` from
-     `data/processed/` (output of 04_scale_and_select.py - already reduced
-     to the real-XGBoost-selected feature set for that target).
-  2. Trains the model the notebook selected for that target, on trainval.
-  3. Predicts on test_tv, inverse-transforms to original units (MWh) via
-     the target's round2_trainval y-scaler: `scaler_y.inverse_transform`
-     then `np.square` (undoing the sqrt + MinMax from 04_scale_and_select.py),
-     exactly as cells 212/216 do.
-  4. Computes RMSE/MAE/R2 (XGBoost also computes MAPE/NMAE/NRMSE, matching
-     cell 212's extra metrics - the original RF cell, 216, only computes
-     RMSE/MAE/R2, so this script does the same per-model-type split).
-  5. Runs SHAP TreeExplainer (works for both RandomForestRegressor and
-     XGBRegressor/GradientBoostingRegressor) and saves a beeswarm summary
-     plot, plus an actual-vs-predicted line chart - same two visualization
-     types cells 212/216 produce.
-  6. Saves the fitted model (joblib), metrics (json), and both plots under
-     `data/processed/final/<target_lower>/`.
+For each of the four targets, this script loads `<target>_trainval.csv`
+and `<target>_test_tv.csv` from `data/processed/` (the output of
+04_scale_and_select.py, already reduced to that target's real-XGBoost
+feature set), trains the model the notebook selected for that target on
+trainval, and predicts on test_tv. Predictions get inverse-transformed back
+to original units (MWh) via that target's round2_trainval y-scaler,
+`scaler_y.inverse_transform` followed by `np.square` to undo the sqrt +
+MinMax scaling from 04_scale_and_select.py, exactly as cells 212 and 216
+do. RMSE, MAE and R2 are computed for every target; the XGBoost targets
+also get MAPE/NMAE/NRMSE, matching cell 212's extra metrics (the original
+RF cell, 216, only computes RMSE/MAE/R2, so this script keeps that same
+split by model type). A SHAP TreeExplainer run, which works for both
+RandomForestRegressor and XGBRegressor/GradientBoostingRegressor, produces
+a beeswarm summary plot, alongside an actual-vs-predicted line chart, the
+same two visualizations cells 212/216 produce. The fitted model (joblib),
+metrics (json), and both plots are saved under
+`data/processed/final/<target_lower>/`.
 
-ENVIRONMENT NOTE: same as 04_scale_and_select.py - if real `xgboost` is not
-installed, this script falls back to `sklearn.ensemble.GradientBoostingRegressor`
-for the two XGBoost-selected targets (Wind, Hydropower), clearly flagged via
-`stats["xgboost_available"]`, never silent. Random Forest (Solar, Biomass)
-is scikit-learn either way, so those two results do not depend on xgboost
-availability.
+Same environment note as 04_scale_and_select.py: if real xgboost isn't
+installed, this script falls back to
+`sklearn.ensemble.GradientBoostingRegressor` for the two XGBoost-selected
+targets (Wind, Hydropower), always flagged via `stats["xgboost_available"]`
+rather than silently. Random Forest (Solar, Biomass) is scikit-learn either
+way, so those two results don't depend on xgboost being available.
 
 Output: data/processed/final/<target_lower>/model.joblib
         data/processed/final/<target_lower>/metrics.json

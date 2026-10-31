@@ -1,41 +1,36 @@
 """
 03_feature_engineering.py
-==========================
 
 Step 3: turns raw hourly readings into the lagged, rolling-window features
-that actually let a model learn "what usually happens next" for a given
-energy source, instead of just reacting to the latest timestamp.
-Reproduces notebook sections 2.4 (daily aggregation) and 2.5 (feature
-engineering - lags and rolling means), cells ~129-137.
+that actually let a model learn what usually happens next for a given
+energy source, instead of just reacting to the latest timestamp. Reproduces
+notebook sections 2.4 (daily aggregation) and 2.5 (lags and rolling means),
+roughly cells 129-137.
 
-2.4 - Daily aggregation (cells 129-131)
-    The hourly train/val/test frames are each resampled to daily frequency
-    with a per-column aggregator (`variables_to_agg` in the original):
-      - production targets (Hydropower, Fossil, Natural Gas, Biomass, Wind,
-        Solar) and precip: 'sum'
-      - continuous weather variables (temp, feelslike, humidity, dew,
-        windgust, windspeed, pressure, visibility, cloudcover,
-        solarradiation, solarenergy, winddir_sin, winddir_cos): 'mean'
-      - capacity columns, precipprob, uvindex, is_weekend, and all the
-        already-cyclical-encoded calendar columns (Day of Month_sin/cos,
-        Month_sin/cos, Season_sin/cos, day_of_week_sin/cos): 'first'
-    Reproduced verbatim from the notebook's `variables_to_agg` dict
-    (including its duplicate 'dew' and 'is_weekend' keys, which in a Python
-    dict simply keep the last-assigned aggregator - harmless here since
-    both duplicate assignments use the same aggregator each time).
+Daily aggregation (2.4) resamples each hourly train/val/test frame to daily
+frequency with a per-column aggregator, matching the notebook's
+`variables_to_agg` dict column for column: the production targets
+(Hydropower, Fossil, Natural Gas, Biomass, Wind, Solar) and precip sum over
+the day, the continuous weather variables (temp, feelslike, humidity, dew,
+windgust, windspeed, pressure, visibility, cloudcover, solarradiation,
+solarenergy, winddir_sin, winddir_cos) average, and the capacity columns,
+precipprob, uvindex, is_weekend, and the already-cyclical-encoded calendar
+columns (Day of Month_sin/cos, Month_sin/cos, Season_sin/cos,
+day_of_week_sin/cos) just take the first value of the day. The dict is
+copied verbatim, including its duplicate 'dew' and 'is_weekend' keys; a
+Python dict just keeps whichever assignment came last, which is harmless
+here since both duplicates use the same aggregator anyway.
 
-2.5 - Feature engineering (cells 135-137)
-    Lag (1, 3, 7 days) and rolling-mean (3, 7 days, using the PRIOR day's
-    rolling window via `shift(1)` so the current day's own value never
-    leaks into its own rolling mean) features are created for:
-      Hydropower, Wind, Solar, Biomass, humidity, solarradiation, windgust,
-      windspeed
-    Lags/rolling means are computed on train+val+test concatenated
-    together (so that val's and test's first few lagged values can be
-    filled from the end of the preceding split), then split back apart.
-    The first 7 rows of `train` are then dropped (they are now NaN for the
-    lag-7 / roll-7 features, since train has nothing further back to pull
-    from).
+Feature engineering (2.5) adds 1/3/7-day lags and 3/7-day rolling means for
+Hydropower, Wind, Solar, Biomass, humidity, solarradiation, windgust and
+windspeed. The rolling means are taken over the prior day's window
+(`shift(1)` first) so a day's own value never leaks into its own rolling
+mean. Lags and rolling means are computed on train+val+test concatenated
+together, so val's and test's first few lagged values can be filled in from
+the tail of the split before them, then the three frames are split back
+apart. The first 7 rows of train are dropped afterward, since they're left
+with NaNs in the lag-7/roll-7 columns once train has nothing further back to
+draw on.
 
 Input:  data/train_hourly.csv, data/val_hourly.csv, data/test_hourly.csv
 Output: data/train_daily.csv, data/val_daily.csv, data/test_daily.csv
@@ -163,17 +158,17 @@ def main():
     stats["val_daily_rows_final"] = len(val_d)
     stats["test_daily_rows_final"] = len(test_d)
 
-    # Diagnostic: boundary calendar dates that land in two adjacent splits
-    # at once. Each split is resampled to daily frequency independently
-    # (see daily_aggregate above), so the single calendar day on which
-    # train ends and val begins (and likewise val/test) gets a *partial*
-    # day in BOTH neighbouring splits, and after the lag/rolling merge
-    # both partial-day rows share that date label. This is inherited
-    # as-is from the original notebook's own `create_lag_rolling_features`
-    # + resample('D') combination - not something introduced here - but
-    # is flagged because any later step that does an index-based
-    # join/merge on these frames (rather than a positional one) must
-    # account for it; see 04_scale_and_select.py's `_attach_target` note.
+    # Worth a flag: the boundary calendar date between two adjacent splits
+    # shows up twice. Each split gets resampled to daily frequency on its
+    # own (see daily_aggregate above), so the single day where train ends
+    # and val begins, or val ends and test begins, has a partial day's
+    # worth of hours on each side, and both partial-day rows end up
+    # sharing the same date label after the lag/rolling merge. That's
+    # inherited straight from the notebook's own combination of
+    # create_lag_rolling_features and resample('D'), not something this
+    # script introduces, but anything downstream that joins or merges on
+    # these frames by index rather than by position needs to know about
+    # it - see the note on _attach_target in 04_scale_and_select.py.
     stats["train_daily_duplicate_dates"] = [
         str(d) for d in train_d.index[train_d.index.duplicated(keep=False)].unique()
     ]

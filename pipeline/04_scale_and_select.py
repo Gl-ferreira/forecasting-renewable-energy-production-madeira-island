@@ -1,66 +1,53 @@
 """
 04_scale_and_select.py
-=======================
 
 Step 4: scales everything onto comparable ranges and lets XGBoost vote on
 which features earn a place in the final models, rather than including
-every variable and hoping for the best.
-Reproduces notebook sections 2.6 (scaling) and 2.7 (feature selection),
-cells ~141-173.
+every variable and hoping for the best. Reproduces notebook sections 2.6
+(scaling) and 2.7 (feature selection), roughly cells 141-173.
 
-2.6 - Scaling (cells 141-142)
-    - sqrt transform is applied FIRST, to every numeric feature column
-      EXCEPT the 4 targets (Solar, Wind, Hydropower, Biomass) and any
-      cyclical column ending in '_sin'/'_cos'. Then MinMax scaling.
-    - Two rounds are built, exactly as in the original:
-        round 1 ("round1"): MinMaxScaler fit on TRAIN only, applied to
-          train/val/test. Produces X_train_<target>, X_val_<target>,
-          X_test_<target> (features) and y_train_<target>, y_val_<target>,
-          y_test_<target> (each target's own sqrt+MinMax, scaler fit on
-          that target's TRAIN y only).
-        round 2 ("round2_trainval"): train+val are concatenated into
-          `trainval`, the X scaler and each target's y scaler are refit on
-          trainval, and applied to trainval/test. Produces
-          X_trainval_<target>, X_test_<target>_tv and
-          y_trainval_<target>, y_test_<target>_tv.
-      Every target starts from an identical copy of the full scaled X
-      (features are only pared down per target in 2.7).
-    - All scalers (X and each target's y, for both rounds) are saved to
-      `data/processed/scalers/` via joblib, exactly as the original saves
-      them under modeling/round1 and modeling/round2_trainval, so results
-      can be de-scaled later.
+Scaling (2.6) applies a sqrt transform first, to every numeric feature
+column except the four targets (Solar, Wind, Hydropower, Biomass) and any
+cyclical column ending in '_sin'/'_cos', then MinMax scaling on top. Two
+rounds are built, matching the original: round 1 fits a MinMaxScaler on
+train only and applies it to train/val/test, producing X_train_<target>,
+X_val_<target>, X_test_<target> plus each target's own sqrt+MinMax y
+(scaler fit on that target's train y only). Round 2 concatenates train and
+val into `trainval`, refits the X scaler and each target's y scaler on
+that, and applies them to trainval/test, producing X_trainval_<target>,
+X_test_<target>_tv and the matching y_trainval/y_test_tv pairs. Every
+target starts from the same full scaled X copy; features only get pared
+down per target in 2.7. All of the scalers, X and each target's y, for both
+rounds, are saved to `data/processed/scalers/` via joblib (the original
+saves the same thing under modeling/round1 and modeling/round2_trainval),
+so results can be de-scaled later.
 
-2.7 - Feature selection (cells 146-173)
-    - 2.7.1 Drop Zero Variance: for each target, any column with zero
-      variance on that target's X_train is dropped from both its X_train
-      and X_test (round 1).
-    - Diagnostics `mutual_info_scores` and `xgboost_feature_importance` are
-      reproduced verbatim from the notebook (same model hyperparameters:
-      n_estimators=300, max_depth=6, learning_rate=0.05, subsample=0.8,
-      colsample_bytree=0.8, importance_type="gain").
-    - 2.7.2 Solar, 2.7.3 Wind, 2.7.4 Hydropower, 2.7.5 Biomass: the
-      original notebook picked its final per-target feature list by eye
-      from `xgboost_feature_importance(..., rel_thresh=1.0)`'s printed
-      table (features above ~1% relative importance), then hard-coded that
-      list. Since those exact (real-data) lists cannot be assumed to still
-      make sense on synthetic data's different feature/target
-      relationships, THIS SCRIPT AUTOMATES that same rule instead of
-      reusing the original's hard-coded lists: for each target, the final
-      feature set is every column with
-      `xgboost_feature_importance(X_train_target, y_train_target,
-      importance_type="gain", rel_thresh=1.0)` output (i.e. relative
-      importance over 1%), which is exactly the same threshold the
-      original notebook used to produce the table it then read off by
-      eye. See the run report for the resulting feature lists and how
-      they compare to the original (real-data) hard-coded ones.
+Feature selection (2.7) first drops, for each target, any column with zero
+variance on that target's X_train, from both X_train and X_test (round 1).
+The `mutual_info_scores` and `xgboost_feature_importance` diagnostics are
+ported verbatim from the notebook, same model hyperparameters throughout
+(n_estimators=300, max_depth=6, learning_rate=0.05, subsample=0.8,
+colsample_bytree=0.8, importance_type="gain"). For the final per-target
+list (Solar, Wind, Hydropower, Biomass in turn), the original notebook read
+`xgboost_feature_importance(..., rel_thresh=1.0)`'s printed table by eye
+and hard-coded whatever came out above roughly 1% relative importance.
+Those exact, real-data-derived lists have no reason to still make sense on
+synthetic data's different feature/target relationships, so this script
+automates the same rule instead of reusing the hard-coded lists: for each
+target, the final feature set is just whatever
+`xgboost_feature_importance(X_train_target, y_train_target,
+importance_type="gain", rel_thresh=1.0)` returns, the same 1% threshold the
+notebook used to build the table it then read by eye. The run report has
+the resulting feature lists and how they compare to the original hard-coded
+ones.
 
-ENVIRONMENT NOTE: this script imports `xgboost.XGBRegressor` as in the
-original. If xgboost is not installed (e.g. a fully offline environment),
-it falls back to `sklearn.ensemble.GradientBoostingRegressor` with the
-same core hyperparameters it can accept, using its built-in
-`.feature_importances_` (impurity-based, a reasonable but NOT identical
-stand-in for XGBoost's "gain" importance) - a clearly-flagged fallback,
-never silent. Install `xgboost` and re-run for the real thing.
+A note on the environment: this script imports `xgboost.XGBRegressor`,
+same as the original. If xgboost isn't installed, it falls back to
+`sklearn.ensemble.GradientBoostingRegressor` with whatever core
+hyperparameters it can accept, using its built-in `.feature_importances_`
+(impurity-based; a reasonable but not identical stand-in for XGBoost's
+"gain" importance). That fallback is always reported in the output rather
+than happening silently. Install xgboost and re-run for the real thing.
 
 Input:  data/train_daily.csv, data/val_daily.csv, data/test_daily.csv
 Output: data/processed/<target>_train.csv, <target>_val.csv, <target>_test.csv
@@ -382,18 +369,18 @@ def main():
         X_trainval = X[f"X_trainval_{name}"]
         X_test_tv = X[f"X_test_{name}_tv"]
 
-        # NOTE: combine X and y by POSITION, not by an index-based join/
-        # concat. A handful of calendar dates sit on the boundary between
-        # two splits (e.g. the day training ends and validation begins)
-        # and, because of how 03_feature_engineering.py's daily resample
-        # + lag/rolling step is faithfully reproduced from the notebook,
-        # that one date can appear twice in a split's index (once from
-        # each adjacent split's partial-day aggregation - see that
-        # script's docstring). X and y are built from the very same
-        # source frame in the very same row order, so they are already
-        # perfectly position-aligned; an index-based join/concat would
-        # instead perform a many-to-many match on the duplicated date
-        # label and silently inflate the row count.
+        # X and y get combined by position here, not by an index-based
+        # join or concat. A handful of calendar dates sit right on the
+        # boundary between two splits (the day training ends and
+        # validation begins, say), and because 03_feature_engineering.py's
+        # daily resample plus lag/rolling step is reproduced faithfully
+        # from the notebook, that date can end up appearing twice in a
+        # split's index, once from each adjacent split's partial-day
+        # aggregation (see that script's docstring). X and y come from the
+        # same source frame in the same row order, so they're already
+        # aligned position-for-position; joining by index instead would
+        # match the duplicated date label many-to-many and quietly inflate
+        # the row count.
         def _attach_target(X_df, y_df, target_name):
             out = X_df.copy()
             out[target_name] = y_df[target_name].to_numpy()

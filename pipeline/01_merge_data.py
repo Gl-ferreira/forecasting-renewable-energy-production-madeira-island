@@ -1,80 +1,55 @@
 """
 01_merge_data.py
-=================
 
 Step 1 of the pipeline: lines up two weather stations and the production
 meter readings on a common hourly clock. Nothing clever yet, but getting
 this join right is what every later feature and model depends on.
-Reproduces notebook sections 1.1 (imports/initial checks), 1.2.1 (merging the two
-weather datasets) and 1.2.2 (merging Production with weather), from
-`COPY -Final code/preprocessing/data_preprocessing_and_modeling.ipynb`
-(cells ~6-72), adapted to run on the synthetic CSV replacements for
-Production.pkl / FW_Funchal.pkl / LPMA.pkl.
 
-What this script does, in the same order as the original notebook:
+Maps to notebook sections 1.1, 1.2.1 and 1.2.2 of
+`COPY -Final code/preprocessing/data_preprocessing_and_modeling.ipynb`
+(roughly cells 6-72), adapted to run on the synthetic CSVs instead of
+Production.pkl / FW_Funchal.pkl / LPMA.pkl. Same order as the notebook:
 
 1. Load the two synthetic hourly weather files and the synthetic 15-minute
    production file.
-2. 1.2.1 - Weather merge: convert `winddir` (degrees) to sine/cosine components
-   on BOTH stations (a true circular mean cannot be taken on raw degrees),
-   drop the original degree/radian columns, then average the two stations'
-   remaining numeric columns (including winddir_sin/winddir_cos) with a plain
-   arithmetic mean -> `weather_data`. This is exactly what the original
-   notebook does (it does not renormalise the sin/cos pair back onto the unit
-   circle after averaging - replicated as-is).
-3. 1.2.2 - Production/weather merge:
-   a. Drop duplicate timestamps on both datasets, keeping the first record.
-   b. Production values are "rate if sustained for an hour", so energy
-      columns are first multiplied by 0.25 (15-min -> quarter of an hour)
-      and then the 15-min data is resampled to hourly bins: flow/energy
-      columns via `sum`, descriptive/metadata columns via `first`.
-   c. This resampling step is known (per the original notebook's own
-      commentary) to silently create extra hourly rows with NaN metadata
-      whenever an entire hour has no underlying 15-min rows (e.g. the
-      "missing hour" at a spring-forward DST transition) - these are
-      dropped via `dropna(subset=['Date'])`. The same step also means an
-      all-NaN hour sums to 0.0 instead of NaN for columns aggregated with
-      `sum` (notably Hydropower during its real missingness window,
-      November 2021); this is NOT patched here, exactly as in the original,
-      because section 2.3's Random Forest imputer step explicitly treats
-      `isna() | eq(0)` as "missing" for Hydropower, downstream.
-   d. DST alignment: in the original (real) data the spring-forward "gap"
-      hour landed on 26 March in the weather feed but 28 March in the
-      production feed for 2023, so the mismatched single hour was dropped
-      from each dataset. In the SYNTHETIC data, the production feed
-      reproduces a similar (but not identical) spring-forward gap in EVERY
-      year of the series, while the synthetic weather feed has no DST gap
-      at all (it's a perfectly continuous hourly series). See the
-      DEVIATION note below for how this was adapted.
-   e. The two frames are concatenated on columns (axis=1) once their
-      indices match exactly.
+2. Weather merge (1.2.1): convert `winddir` (degrees) to sine/cosine on
+   both stations, since you can't take a circular mean on raw degrees, drop
+   the original degree/radian columns, then average the two stations'
+   remaining numeric columns with a plain arithmetic mean. One quirk kept
+   on purpose: the notebook never renormalises the sin/cos pair back onto
+   the unit circle after averaging, so neither does this.
+3. Production/weather merge (1.2.2): drop duplicate timestamps on both
+   sides, keeping the first record. Production values are a rate ("if
+   sustained for an hour"), so the energy columns get multiplied by 0.25
+   before resampling 15-min data up to hourly bins (sum for flow/energy
+   columns, first for metadata). That resample step quietly creates a
+   handful of extra hourly rows with NaN metadata whenever a whole hour has
+   no underlying 15-min rows, most notably the missing hour at a
+   spring-forward DST transition, and those get dropped. It also means an
+   all-NaN hour sums to 0.0 instead of NaN for the `sum`-aggregated columns
+   (this bites Hydropower during its real missingness window, November
+   2021). Left as-is here, same as the notebook, because the imputer step
+   in 02_preprocess.py already treats `isna() | eq(0)` as "missing" for
+   Hydropower, so it gets handled downstream rather than patched twice.
+   Finally, the two frames get aligned on timestamps that exist in both and
+   concatenated column-wise.
 
-DEVIATIONS from the original notebook (synthetic-data-specific judgment
-calls - see the task report for detail):
-  - The original notebook hard-codes a single date-specific drop
-    (`'2023-03-26 01:00:00'` from Production, `'2023-03-28 01:00:00'` from
-    weather) because that was the one mismatch found in the real data. The
-    synthetic data instead has a reproducible spring-forward gap in
-    Production for every covered year (2021-03-28, 2022-03-27, 2023-03-28,
-    2024-03-31), and no gap at all in weather. This script therefore
-    generalises the ORIGINAL INTENT ("drop whichever single hour exists in
-    one dataset but not the other around the DST transition") rather than
-    the original's literal hard-coded dates: after fixing the production
-    side (dropna on the synthetic NaN-metadata rows), it computes the
-    symmetric difference between the two indices and drops whatever is
-    left over on each side. This reduces to the identical fix, with the
-    identical row-count effect, if the synthetic data behaved exactly like
-    the real data.
-  - The synthetic production series extends 1 hour later on its last day
-    (2024-08-31 23:00) than the synthetic weather series (whose last hourly
-    reading is 22:00) -- an artefact of the two generators' end-of-range
-    boundaries, not a DST issue. That single trailing hour is dropped by the
-    same symmetric-difference step above, instead of being left as a
-    NaN-weather row in the merged frame.
+One real adaptation versus the notebook, worth flagging: the real data had
+exactly one DST mismatch (26 March in weather vs. 28 March in production,
+2023 only), so the notebook just hard-codes dropping those two specific
+timestamps. The synthetic generator reproduces a spring-forward gap in
+production every year but has no DST gap in weather at all, so a single
+hard-coded date pair wouldn't cover it. This script generalises the intent
+instead: drop whichever hour exists on one side but not the other around
+each DST transition, computed as a symmetric difference between the two
+indices rather than listed by hand. Same effect, same row count, if the
+synthetic data happened to match the real pattern exactly. It also happens
+to clean up one more mismatch for free: the synthetic production series
+runs one hour later on its last day than the synthetic weather series, an
+artefact of how the two generators pick their end boundary, not a DST
+issue, and that trailing hour gets caught by the same step.
 
-Output: `data/merged_hourly.csv` - the single hourly dataframe `df` that
-notebook cell 72 (`pd.concat([Production, weather_data], axis=1)`) produces,
-ready for section 2 (`02_preprocess.py`).
+Output: `data/merged_hourly.csv`, ready for `02_preprocess.py`.
 """
 
 from pathlib import Path
