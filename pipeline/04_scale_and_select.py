@@ -1,6 +1,10 @@
 """
 04_scale_and_select.py
 =======================
+
+Step 4: scales everything onto comparable ranges and lets XGBoost vote on
+which features earn a place in the final models, rather than including
+every variable and hoping for the best.
 Reproduces notebook sections 2.6 (scaling) and 2.7 (feature selection),
 cells ~141-173.
 

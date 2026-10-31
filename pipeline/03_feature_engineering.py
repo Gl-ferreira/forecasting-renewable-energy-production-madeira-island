@@ -1,6 +1,10 @@
 """
 03_feature_engineering.py
 ==========================
+
+Step 3: turns raw hourly readings into the lagged, rolling-window features
+that actually let a model learn "what usually happens next" for a given
+energy source, instead of just reacting to the latest timestamp.
 Reproduces notebook sections 2.4 (daily aggregation) and 2.5 (feature
 engineering - lags and rolling means), cells ~129-137.
 

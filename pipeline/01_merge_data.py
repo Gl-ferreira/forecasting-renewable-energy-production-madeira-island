@@ -1,6 +1,10 @@
 """
 01_merge_data.py
 =================
+
+Step 1 of the pipeline: lines up two weather stations and the production
+meter readings on a common hourly clock. Nothing clever yet, but getting
+this join right is what every later feature and model depends on.
 Reproduces notebook sections 1.1 (imports/initial checks), 1.2.1 (merging the two
 weather datasets) and 1.2.2 (merging Production with weather), from
 `COPY -Final code/preprocessing/data_preprocessing_and_modeling.ipynb`

@@ -1,6 +1,10 @@
 """
 02_preprocess.py
 =================
+
+Step 2: cleans up the inevitable mess in two years of real-world sensor and
+meter data — missing hours, DST jumps, gaps that need imputing — so the
+models downstream are learning signal, not sensor noise.
 Reproduces notebook sections 2.1 (initial adjustments), 2.2 (train-test
 split), 2.2-duplicate (cyclical sin/cos encoding) and 2.3 (imputing missing
 values: linear interpolation + Random Forest imputer), cells ~83-125.

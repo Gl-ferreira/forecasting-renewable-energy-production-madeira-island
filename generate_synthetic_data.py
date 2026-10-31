@@ -1,6 +1,11 @@
 """
 Synthetic data generator for the Madeira RES forecasting portfolio repo.
 
+Madeira can't lean on a mainland interconnector, so getting renewable
+production forecasts right matters more here than almost anywhere else in
+Europe. This script exists so that part of the story can be reproduced and
+run by anyone, without me having to hand over EEM's real, confidential data.
+
 Produces data that is STRUCTURALLY AND STATISTICALLY SIMILAR to the real,
 proprietary EEM production dataset and the Visual Crossing weather dataset
 used in the published study — same shape, timestamps, column names, rough

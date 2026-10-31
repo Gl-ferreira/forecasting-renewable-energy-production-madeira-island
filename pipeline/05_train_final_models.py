@@ -1,6 +1,10 @@
 """
 05_train_final_models.py
 =========================
+
+Step 5, the payoff: trains the final model for each of the four renewable
+sources and explains its predictions with SHAP, so the output is something
+a grid operator could actually trust, not just a black-box number.
 Reproduces notebook sections 3.3 (Final Round) and 3.4 (Proposal of the best
 model), cells ~207-222 of `data_preprocessing_and_modeling.ipynb`
 (`COPY -Final code/preprocessing/`, read-only), on the synthetic data.

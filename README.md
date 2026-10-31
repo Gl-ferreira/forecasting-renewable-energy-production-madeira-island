@@ -1,6 +1,18 @@
-# Synthetic Data & Modeling Pipeline — Forecasting Renewable Energy Production in Madeira Island
+# Forecasting Renewable Energy Production in Madeira Island
 
-This repository accompanies the manuscript **"Forecasting Renewable Energy Production in Madeira Island"**, submitted to *Cleaner Energy Systems* (Elsevier). It exists to satisfy the journal's data-availability requirement in a way that does not involve sharing the real, confidential EEM (Empresa de Electricidade da Madeira) production data or the Visual Crossing weather data used in the published study.
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/paper-under%20review-orange)]()
+
+A synthetic-data reproduction of the modeling pipeline behind the manuscript **"Forecasting Renewable Energy Production in Madeira Island,"** submitted to *Cleaner Energy Systems* (Elsevier).
+
+## The problem
+
+Fossil fuels still cover most of the world's growing energy demand, and the climate cost of that is well understood. Island grids feel the trade-off more acutely than most: Madeira can't fall back on an interconnector to a larger mainland grid the way most of continental Europe can, so every megawatt of hydropower, wind, solar, and biomass it brings online has to be balanced locally, in real time, against fossil and natural-gas backup. The upside is that Madeira already has a meaningful renewable mix across all four of those sources — the bottleneck isn't generation capacity, it's *predictability*. Grid operators who can forecast how much a renewable source will produce a day or two out can schedule storage and backup more precisely, cut fossil-fuel standby, and safely let more renewables onto the grid. That's the operational gap this project tries to close with machine learning.
+
+## How this started
+
+This began as my master's thesis in Data Science and Advanced Analytics at NOVA IMS, working with real operational data from EEM (Empresa de Electricidade da Madeira), the island's utility, under a confidentiality arrangement. I built and compared four modeling approaches — LSTM, MLP, Random Forest, and XGBoost — across all four renewable sources, and the results held up well enough, and felt useful enough beyond an academic exercise, that my supervisor (Maria Anastasiadou) and I decided to take it further and turn it into a peer-reviewed article, together with co-author Vitor Santos. This repository is the part of that work I can make public.
 
 ## ⚠️ Both datasets in this repository are synthetic
 
@@ -10,7 +22,7 @@ This repository accompanies the manuscript **"Forecasting Renewable Energy Produ
 
 ## Why the data isn't public
 
-The production data belongs to EEM and was shared with the author under a non-disclosure arrangement for the purposes of his master's thesis. EEM confirmed they had no objection to the thesis being developed into a journal article, but that confirmation did not extend to publishing the underlying data or code, and sharing it was never requested. The weather data is pulled from the Visual Crossing Weather API; while not confidential, its license terms prohibit republishing raw downloaded records in bulk, and the full historical pull used in the study substantially exceeds the API's free-tier query caps. Publishing a synthetic, calibrated substitute avoids both issues while still letting the full pipeline be run and inspected by anyone.
+The production data belongs to EEM and was shared with me under a non-disclosure arrangement for the purposes of my master's thesis. EEM confirmed they had no objection to the thesis being developed into a journal article, but that confirmation did not extend to publishing the underlying data or code, and sharing it was never requested. The weather data is pulled from the Visual Crossing Weather API; while not confidential, its license terms prohibit republishing raw downloaded records in bulk, and the full historical pull used in the study substantially exceeds the API's free-tier query caps. Publishing a synthetic, calibrated substitute avoids both issues while still letting the full pipeline be run and inspected by anyone.
 
 ## Repository structure
 
@@ -29,17 +41,17 @@ synthetic_data_repo/
 │       └── final/                             # Output of pipeline/05
 │           └── <target>/{model.joblib, metrics.json, line_chart.png, shap_beeswarm.png}
 ├── pipeline/
-│   ├── 01_merge_data.py              # Merge production + weather (notebook cells 0-~40)
-│   ├── 02_preprocess.py              # Cleaning, DST alignment, resampling (notebook cells ~40-~90)
-│   ├── 03_feature_engineering.py     # Lags, rolling windows, cyclical encodings (notebook cells ~90-~140)
-│   ├── 04_scale_and_select.py        # Scaling + XGBoost-based feature selection (notebook cells ~140-173)
-│   ├── 05_train_final_models.py      # Final-round model training + SHAP (notebook cells ~207-222)
+│   ├── 01_merge_data.py              # Merge production + weather
+│   ├── 02_preprocess.py              # Cleaning, DST alignment, resampling
+│   ├── 03_feature_engineering.py     # Lags, rolling windows, cyclical encodings
+│   ├── 04_scale_and_select.py        # Scaling + XGBoost-based feature selection
+│   ├── 05_train_final_models.py      # Final-round model training + SHAP
 │   └── requirements.txt
 └── colab/
     └── synthetic_data_repo_real_xgboost.ipynb   # Colab runner for 04 and 05 (see "Environment notes")
 ```
 
-Each pipeline script's docstring names the exact section(s) and cell range of the original, private thesis notebook (`data_preprocessing_and_modeling.ipynb`) that it reproduces, so the mapping between this code and the published methodology is traceable.
+Each pipeline script's docstring names the exact section(s) of the original, private thesis notebook (`data_preprocessing_and_modeling.ipynb`) that it reproduces, so the mapping between this code and the published methodology stays traceable — useful if you're trying to verify the method, not just run the code.
 
 ## Golden-path pipeline
 
@@ -60,7 +72,7 @@ Each script reads the previous script's output from `data/` and writes its own o
 
 ### Modeling methodology reproduced by `05_train_final_models.py`
 
-The manuscript's thesis work evaluated LSTM, MLP, Random Forest, and XGBoost across two rounds of experiments. LSTM was eliminated after round 1 (weakest performer; insufficient data volume for deep learning to be competitive) and MLP was eliminated after round 2 (SHAP explanations are slow and only approximate for MLPs, versus fast and exact for tree-based models). The final round concluded that **XGBoost performs best for Hydropower and Wind, while Random Forest performs best for Solar and Biomass** — a hybrid solution, which is what this script reproduces, using the exact grid-search-winning hyperparameters from the source notebook.
+The thesis work evaluated LSTM, MLP, Random Forest, and XGBoost across two rounds of experiments. LSTM was eliminated after round 1 (weakest performer; insufficient data volume for deep learning to be competitive) and MLP was eliminated after round 2 (SHAP explanations are slow and only approximate for MLPs, versus fast and exact for tree-based models). The final round concluded that **XGBoost performs best for Hydropower and Wind, while Random Forest performs best for Solar and Biomass** — a hybrid solution, which is what this script reproduces, using the exact grid-search-winning hyperparameters from the source notebook.
 
 ### Environment notes
 
@@ -72,7 +84,7 @@ The feature importance lists in `data/processed/<target>_xgb_importance.csv` inc
 
 ## Results obtained on the synthetic data
 
-For transparency, here are the final-round metrics this pipeline produces when run on the synthetic data (see `data/processed/final/final_summary.csv`). **These are not, and should not be read as, the manuscript's results** — see the disclaimer at the top of this document.
+For transparency, here are the final-round metrics this pipeline produces when run on the synthetic data (see `data/processed/final/final_summary.csv`). **These are not, and should not be read as, the manuscript's results** — see the disclaimer near the top of this document.
 
 | Target | Model | R² | RMSE | MAE | MAPE |
 |---|---|---|---|---|---|
@@ -90,6 +102,12 @@ The code in this repository (`generate_synthetic_data.py`, everything under `pip
 If you use this code or the synthetic datasets, please cite the published manuscript once available:
 
 > [Author names], "Forecasting Renewable Energy Production in Madeira Island," *Cleaner Energy Systems* (Elsevier), under review. Citation details will be added here once the article is formally accepted and published.
+
+## About me
+
+I'm Gonçalo Ferreira, a data analyst based in Lisbon, working toward becoming a stronger full-stack data scientist / ML engineer. This project is where that direction started: taking a real operational problem for an island utility, building and rigorously comparing several ML approaches against it, and following the work through to a peer-reviewed submission rather than leaving it in a thesis drawer.
+
+[ADD LINK: your LinkedIn] · [ADD LINK: your portfolio/personal site, if you have one]
 
 ## Contact
 
