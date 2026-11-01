@@ -1,27 +1,22 @@
 """
-Synthetic data generator for the Madeira RES forecasting portfolio repo.
+Synthetic data generator for this repository.
 
-Madeira can't lean on a mainland interconnector, so getting renewable
-production forecasts right matters more here than almost anywhere else in
-Europe. This script exists so that part of the story can be reproduced and
-run by anyone, without me having to hand over EEM's real, confidential data.
+The production data used in the article belong to EEM and were shared
+under a confidentiality arrangement, and the Visual Crossing weather data
+cannot be redistributed in bulk. This script creates synthetic substitutes
+with the same structure as the real files (columns, 15-minute and hourly
+timestamps, period 2021-01-01 to 2024-08-31, DST irregularities, missing
+values in Hydropower for November 2021 and in windgust), so the pipeline
+can be run by anyone. Every value is generated; no real record is copied.
 
-Produces data that's structurally and statistically similar to the real,
-proprietary EEM production dataset and the Visual Crossing weather dataset
-used in the published study (same shape, timestamps, column names, rough
-seasonality/diurnal patterns, skew, missing-value patterns), but every
-value is synthetically generated. No real record, row, or cell from the
-original datasets shows up anywhere in this script or its output.
+The generator was calibrated with aggregate statistics only: installed
+capacity, monthly seasonal shapes, skewness and missing-value rates
+(profiled from the real data on 2026-10-16). It approximates the real
+value ranges and the solar and hydropower seasonality, but it does not
+reproduce the real wind and biomass seasonality closely, so results
+obtained on these data should not be compared with the article.
 
-Calibration targets, profiled read-only from the real data on 2026-10-16.
-Nothing below goes beyond aggregate statistics already consistent with
-what's publicly stated in the published manuscript (seasonal shares,
-installed capacity, variable lists, skewness/outlier/missingness rates):
-  - Production: 128,540 rows, 15-min resolution, 2021-01-01..2024-08-31,
-    6 energy sources + capacities, Hydropower missing all of Nov 2021,
-    DST duplicate/missing timestamps on the documented dates.
-  - Weather: 32,135 rows per station, hourly, 16 variables, windgust ~18.5%
-    missing, visibility/solarradiation/solarenergy/uvindex ~0.03% missing.
+Relevant manuscript sections: 2.1 (EEM dataset) and 2.2 (Weather dataset).
 
 Run: python3 generate_synthetic_data.py --out ./data
 """
@@ -37,8 +32,9 @@ RNG = np.random.default_rng(42)
 # Production (EEM) synthetic generator
 # ---------------------------------------------------------------------------
 
-# Real per-year installed capacities. Already public, reported in the
-# published manuscript's Fig. 2, not proprietary production records.
+# Approximate installed capacities (MW) used to scale the synthetic series.
+# They are rounded and slightly differ from the real values in the
+# article's Fig. 2; they only set the order of magnitude of each source.
 CAPACITY_BY_YEAR = {
     2021: dict(Wind=63.11, Hydropower=79.0, Solar=15, Biomass=9, Fossil=170.0, NaturalGas=56),
     2022: dict(Wind=63.10, Hydropower=79.0, Solar=15, Biomass=9, Fossil=170.0, NaturalGas=56),

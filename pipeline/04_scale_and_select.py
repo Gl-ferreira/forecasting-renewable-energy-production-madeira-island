@@ -1,53 +1,26 @@
 """
 04_scale_and_select.py
 
-Step 4: scales everything onto comparable ranges and lets XGBoost vote on
-which features earn a place in the final models, rather than including
-every variable and hoping for the best. Reproduces notebook sections 2.6
-(scaling) and 2.7 (feature selection), roughly cells 141-173.
+Step 4: scaling and feature selection (manuscript Section 2.3, Table 1).
 
-Scaling (2.6) applies a sqrt transform first, to every numeric feature
-column except the four targets (Solar, Wind, Hydropower, Biomass) and any
-cyclical column ending in '_sin'/'_cos', then MinMax scaling on top. Two
-rounds are built, matching the original: round 1 fits a MinMaxScaler on
-train only and applies it to train/val/test, producing X_train_<target>,
-X_val_<target>, X_test_<target> plus each target's own sqrt+MinMax y
-(scaler fit on that target's train y only). Round 2 concatenates train and
-val into `trainval`, refits the X scaler and each target's y scaler on
-that, and applies them to trainval/test, producing X_trainval_<target>,
-X_test_<target>_tv and the matching y_trainval/y_test_tv pairs. Every
-target starts from the same full scaled X copy; features only get pared
-down per target in 2.7. All of the scalers, X and each target's y, for both
-rounds, are saved to `data/processed/scalers/` via joblib (the original
-saves the same thing under modeling/round1 and modeling/round2_trainval),
-so results can be de-scaled later.
+Scaling: a square-root transform is applied to all numeric features except
+the four targets and the sine/cosine columns, followed by min-max scaling.
+Two versions are built, as in the original analysis: one with scalers fit
+on training data only (rounds 1 and 2), and one with scalers refit on
+training plus validation for the final round. Each target's y is scaled
+with its own scaler. All scalers are saved in data/processed/scalers/ so
+predictions can be converted back to MWh.
 
-Feature selection (2.7) first drops, for each target, any column with zero
-variance on that target's X_train, from both X_train and X_test (round 1).
-The `mutual_info_scores` and `xgboost_feature_importance` diagnostics are
-ported verbatim from the notebook, same model hyperparameters throughout
-(n_estimators=300, max_depth=6, learning_rate=0.05, subsample=0.8,
-colsample_bytree=0.8, importance_type="gain"). For the final per-target
-list (Solar, Wind, Hydropower, Biomass in turn), the original notebook read
-`xgboost_feature_importance(..., rel_thresh=1.0)`'s printed table by eye
-and hard-coded whatever came out above roughly 1% relative importance.
-Those exact, real-data-derived lists have no reason to still make sense on
-synthetic data's different feature/target relationships, so this script
-automates the same rule instead of reusing the hard-coded lists: for each
-target, the final feature set is just whatever
-`xgboost_feature_importance(X_train_target, y_train_target,
-importance_type="gain", rel_thresh=1.0)` returns, the same 1% threshold the
-notebook used to build the table it then read by eye. The run report has
-the resulting feature lists and how they compare to the original hard-coded
-ones.
+Feature selection: zero-variance features are removed per target, and
+mutual information and XGBoost gain-based importance are computed with the
+same settings as the original analysis. In the article, the final feature
+lists (Table 1) were chosen by inspecting both rankings, keeping features
+with at least about 1% relative gain. Those lists are specific to the real
+data, so on the synthetic data this script applies the 1% gain rule
+automatically and reports how the resulting lists compare with Table 1.
 
-A note on the environment: this script imports `xgboost.XGBRegressor`,
-same as the original. If xgboost isn't installed, it falls back to
-`sklearn.ensemble.GradientBoostingRegressor` with whatever core
-hyperparameters it can accept, using its built-in `.feature_importances_`
-(impurity-based; a reasonable but not identical stand-in for XGBoost's
-"gain" importance). That fallback is always reported in the output rather
-than happening silently. Install xgboost and re-run for the real thing.
+If xgboost is not installed, sklearn's GradientBoostingRegressor is used
+instead (impurity-based importance), and this is reported in the output.
 
 Input:  data/train_daily.csv, data/val_daily.csv, data/test_daily.csv
 Output: data/processed/<target>_train.csv, <target>_val.csv, <target>_test.csv
@@ -379,7 +352,7 @@ def main():
         # aggregation (see that script's docstring). X and y come from the
         # same source frame in the same row order, so they're already
         # aligned position-for-position; joining by index instead would
-        # match the duplicated date label many-to-many and quietly inflate
+        # match the duplicated date label many-to-many and inflate
         # the row count.
         def _attach_target(X_df, y_df, target_name):
             out = X_df.copy()

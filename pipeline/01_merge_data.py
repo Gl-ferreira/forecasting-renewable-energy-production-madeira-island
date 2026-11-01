@@ -1,55 +1,31 @@
 """
 01_merge_data.py
 
-Step 1 of the pipeline: lines up two weather stations and the production
-meter readings on a common hourly clock. Nothing clever yet, but getting
-this join right is what every later feature and model depends on.
+Step 1: merges the two weather stations and the production data on a
+common hourly timestamp (manuscript Sections 2.1, 2.2 and the first
+paragraph of 2.3).
 
-Maps to notebook sections 1.1, 1.2.1 and 1.2.2 of
-`COPY -Final code/preprocessing/data_preprocessing_and_modeling.ipynb`
-(roughly cells 6-72), adapted to run on the synthetic CSVs instead of
-Production.pkl / FW_Funchal.pkl / LPMA.pkl. Same order as the notebook:
+1. Loads the two hourly weather files and the 15-minute production file.
+2. Converts winddir to sine and cosine for each station, since a circular
+   variable cannot be averaged in degrees, drops the original columns and
+   averages the two stations. As in the original analysis, the averaged
+   sine/cosine pair is not renormalized.
+3. Removes duplicated timestamps (first record kept). The EEM values are
+   average power over each 15-minute interval (MW), so they are multiplied
+   by 0.25 h to obtain energy (MWh) before being summed into hourly bins.
+   Hours with no 15-minute records are dropped. An hour with only missing
+   values sums to 0 rather than NaN, which affects Hydropower in November
+   2021; 02_preprocess.py treats those zeros as missing before imputation.
+4. Keeps only the timestamps present in both datasets and joins them.
 
-1. Load the two synthetic hourly weather files and the synthetic 15-minute
-   production file.
-2. Weather merge (1.2.1): convert `winddir` (degrees) to sine/cosine on
-   both stations, since you can't take a circular mean on raw degrees, drop
-   the original degree/radian columns, then average the two stations'
-   remaining numeric columns with a plain arithmetic mean. One quirk kept
-   on purpose: the notebook never renormalises the sin/cos pair back onto
-   the unit circle after averaging, so neither does this.
-3. Production/weather merge (1.2.2): drop duplicate timestamps on both
-   sides, keeping the first record. Production values are a rate ("if
-   sustained for an hour"), so the energy columns get multiplied by 0.25
-   before resampling 15-min data up to hourly bins (sum for flow/energy
-   columns, first for metadata). That resample step quietly creates a
-   handful of extra hourly rows with NaN metadata whenever a whole hour has
-   no underlying 15-min rows, most notably the missing hour at a
-   spring-forward DST transition, and those get dropped. It also means an
-   all-NaN hour sums to 0.0 instead of NaN for the `sum`-aggregated columns
-   (this bites Hydropower during its real missingness window, November
-   2021). Left as-is here, same as the notebook, because the imputer step
-   in 02_preprocess.py already treats `isna() | eq(0)` as "missing" for
-   Hydropower, so it gets handled downstream rather than patched twice.
-   Finally, the two frames get aligned on timestamps that exist in both and
-   concatenated column-wise.
+Difference from the original analysis: the real data had a single DST
+mismatch between production and weather (March 2023), which was removed by
+date. The synthetic data have a mismatch every spring, so this script
+removes any hour that exists in only one of the two datasets around each
+DST change. This also removes one trailing hour on the last day, caused by
+the two synthetic generators ending at slightly different times.
 
-One real adaptation versus the notebook, worth flagging: the real data had
-exactly one DST mismatch (26 March in weather vs. 28 March in production,
-2023 only), so the notebook just hard-codes dropping those two specific
-timestamps. The synthetic generator reproduces a spring-forward gap in
-production every year but has no DST gap in weather at all, so a single
-hard-coded date pair wouldn't cover it. This script generalises the intent
-instead: drop whichever hour exists on one side but not the other around
-each DST transition, computed as a symmetric difference between the two
-indices rather than listed by hand. Same effect, same row count, if the
-synthetic data happened to match the real pattern exactly. It also happens
-to clean up one more mismatch for free: the synthetic production series
-runs one hour later on its last day than the synthetic weather series, an
-artefact of how the two generators pick their end boundary, not a DST
-issue, and that trailing hour gets caught by the same step.
-
-Output: `data/merged_hourly.csv`, ready for `02_preprocess.py`.
+Output: data/merged_hourly.csv
 """
 
 from pathlib import Path

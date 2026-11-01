@@ -1,36 +1,21 @@
 """
 03_feature_engineering.py
 
-Step 3: turns raw hourly readings into the lagged, rolling-window features
-that actually let a model learn what usually happens next for a given
-energy source, instead of just reacting to the latest timestamp. Reproduces
-notebook sections 2.4 (daily aggregation) and 2.5 (lags and rolling means),
-roughly cells 129-137.
+Step 3: daily aggregation and lag features (manuscript Section 2.3).
 
-Daily aggregation (2.4) resamples each hourly train/val/test frame to daily
-frequency with a per-column aggregator, matching the notebook's
-`variables_to_agg` dict column for column: the production targets
-(Hydropower, Fossil, Natural Gas, Biomass, Wind, Solar) and precip sum over
-the day, the continuous weather variables (temp, feelslike, humidity, dew,
-windgust, windspeed, pressure, visibility, cloudcover, solarradiation,
-solarenergy, winddir_sin, winddir_cos) average, and the capacity columns,
-precipprob, uvindex, is_weekend, and the already-cyclical-encoded calendar
-columns (Day of Month_sin/cos, Month_sin/cos, Season_sin/cos,
-day_of_week_sin/cos) just take the first value of the day. The dict is
-copied verbatim, including its duplicate 'dew' and 'is_weekend' keys; a
-Python dict just keeps whichever assignment came last, which is harmless
-here since both duplicates use the same aggregator anyway.
+Each split is resampled to daily values: production and precipitation are
+summed, continuous weather variables are averaged, and capacities,
+precipprob, uvindex and the calendar encodings take the first value of the
+day. The aggregation dictionary is copied from the original analysis,
+including two duplicated keys that use the same aggregator.
 
-Feature engineering (2.5) adds 1/3/7-day lags and 3/7-day rolling means for
-Hydropower, Wind, Solar, Biomass, humidity, solarradiation, windgust and
-windspeed. The rolling means are taken over the prior day's window
-(`shift(1)` first) so a day's own value never leaks into its own rolling
-mean. Lags and rolling means are computed on train+val+test concatenated
-together, so val's and test's first few lagged values can be filled in from
-the tail of the split before them, then the three frames are split back
-apart. The first 7 rows of train are dropped afterward, since they're left
-with NaNs in the lag-7/roll-7 columns once train has nothing further back to
-draw on.
+Lags of 1, 3 and 7 days and rolling means of 3 and 7 days are then added
+for Hydropower, Wind, Solar, Biomass, humidity, solarradiation, windgust
+and windspeed. Rolling means use the previous days only (shift(1)), so a
+day's own value never enters its rolling mean. The features are computed
+on the three splits joined in time order, so the first lags of validation
+and test come from the end of the previous split, and the first 7 days of
+training, which have incomplete lags, are dropped.
 
 Input:  data/train_hourly.csv, data/val_hourly.csv, data/test_hourly.csv
 Output: data/train_daily.csv, data/val_daily.csv, data/test_daily.csv
@@ -158,7 +143,7 @@ def main():
     stats["val_daily_rows_final"] = len(val_d)
     stats["test_daily_rows_final"] = len(test_d)
 
-    # Worth a flag: the boundary calendar date between two adjacent splits
+    # Note: the boundary calendar date between two adjacent splits
     # shows up twice. Each split gets resampled to daily frequency on its
     # own (see daily_aggregate above), so the single day where train ends
     # and val begins, or val ends and test begins, has a partial day's

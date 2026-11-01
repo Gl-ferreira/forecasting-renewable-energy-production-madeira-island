@@ -1,13 +1,10 @@
 """
-make_validation_chart.py
+Plots the monthly mean production of the synthetic data for each source
+and saves synthetic_vs_real_seasonal.png.
 
-Sanity check: does the synthetic production data track the real monthly
-pattern for each energy source? Produces synthetic_vs_real_seasonal.png.
-
-The real comparison line only shows up if you have access to the original,
-confidential Production.pkl (the author does, nobody else should). Without
-it, this still runs and plots the synthetic side on its own, so the script
-isn't dead weight for anyone cloning the repo.
+If the confidential Production.pkl is available locally (only the authors
+have it), the real monthly means are plotted alongside for comparison.
+Otherwise only the synthetic series is shown.
 """
 import argparse
 from pathlib import Path

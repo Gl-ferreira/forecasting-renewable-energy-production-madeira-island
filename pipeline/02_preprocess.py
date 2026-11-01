@@ -1,47 +1,30 @@
 """
 02_preprocess.py
 
-Step 2: cleans up the inevitable mess in two years of real-world sensor and
-meter data, missing hours, DST jumps, gaps that need imputing, so the
-models downstream are learning signal, not sensor noise.
+Step 2: cleaning, train/validation/test split, cyclical encoding and
+imputation (manuscript Section 2.3).
 
-Maps to notebook sections 2.1, 2.2, the second 2.2 (the notebook reuses
-that section number for the cyclical encoding step, kept as-is here), and
-2.3, cells roughly 83-125. Same order as the notebook:
+- Casts numeric columns to float32 and drops variables not used in the
+  study (Month Name, Hour of the Year, Year, Curtailed Wind Energy,
+  snowdepth, Hour of the day).
+- Splits the hourly data chronologically into 70% training, 15% validation
+  and 15% test, at the same hourly boundaries as the original analysis
+  (2023-07-27 06:00 and 2024-02-13 02:00). In daily terms this is the split
+  reported in Section 2.3.
+- Encodes Season as an integer and replaces Month, Season, day of month
+  and day of week with sine/cosine pairs; a weekend flag is also added.
+  The day-of-month, day-of-week and weekend features were part of the
+  original candidate set but were not selected for any final model
+  (manuscript Table 1).
+- Imputes, using the training split only: linear interpolation for
+  visibility, solarradiation, solarenergy and uvindex, and Random Forest
+  imputation for Hydropower (from temp, dew, Season_cos, Month_sin and
+  Month_cos, trained without November 2021) and for windgust (from
+  windspeed and Wind). As in the original analysis, validation and test are
+  not imputed at this stage, since both gaps fall inside the training
+  period; the script prints any values still missing in those splits.
 
-Section 2.1 casts all float64 columns to float32 (Season stays as-is), and
-drops the columns the original analysis found didn't add anything: Month
-Name, Hour of the Year, Year, Curtailed Wind Energy, snowdepth, Hour of the
-day.
-
-Section 2.2 splits on fixed dates into a 70/15/15 train/val/test split on
-the hourly merged frame (train through 2023-07-27 06:00, val through
-2024-02-13 02:00, test after that), then the second "2.2" step maps Season
-to an integer code, adds day_of_week and is_weekend, and replaces Day of
-Month, Month, Season and day_of_week with their sine/cosine pairs. Each
-split gets its own cyclical encoding fit independently, though since these
-are just deterministic trig transforms rather than anything learned from
-the data, that doesn't actually matter for correctness.
-
-Section 2.3 imputes two different ways, train split only in both cases:
-linear interpolation for visibility, solarradiation, solarenergy and
-uvindex (barely any missing values to begin with), and a Random Forest
-imputer for the two variables with real gaps. Hydropower gets trained on
-temp, dew, Season_cos, Month_sin and Month_cos, excluding November 2021
-from training since that's the exact window being imputed, then applied to
-any November 2021 row where Hydropower is NaN or exactly 0 (that 0 case is
-the resample-sum artefact described in 01_merge_data.py). windgust gets
-trained on windspeed and Wind, using every row with a real windgust value,
-applied to whatever's left missing.
-
-Worth noting: the original only imputes the train split, val and test are
-left alone at this stage. Kept the same way here. That was presumably fine
-on the real data because both missingness windows fall inside train, and
-this script prints whatever NaNs are left over in val/test so that
-assumption can actually be checked against the synthetic data rather than
-just assumed to hold.
-
-Input:  data/merged_hourly.csv (from 01_merge_data.py)
+Input:  data/merged_hourly.csv
 Output: data/train_hourly.csv, data/val_hourly.csv, data/test_hourly.csv
 """
 
