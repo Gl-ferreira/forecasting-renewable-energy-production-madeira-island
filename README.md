@@ -129,9 +129,9 @@ Final-round metrics reported in the article (Table 4), obtained on the real, con
 
 | RES | Model | MAE (MWh) | RMSE (MWh) | R² |
 |---|---|---|---|---|
-| Solar | Random Forest | 12.9 | 15.7 | 0.33 |
-| Wind | XGBoost | 142.8 | 187.9 | 0.68 |
-| Hydropower | XGBoost | 27.2 | 42.2 | 0.95 |
+| Solar | Random Forest | 12.9 | 15.8 | 0.33 |
+| Wind | XGBoost | 142.8 | 188.0 | 0.68 |
+| Hydropower | XGBoost | 27.2 | 42.1 | 0.94 |
 | Biomass | Random Forest | 8.8 | 16.9 | 0.75 |
 
 <table>
