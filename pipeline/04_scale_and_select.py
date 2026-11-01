@@ -346,7 +346,7 @@ def main():
         # join or concat. A handful of calendar dates sit right on the
         # boundary between two splits (the day training ends and
         # validation begins, say), and because 03_feature_engineering.py's
-        # daily resample plus lag/rolling step is reproduced faithfully
+        # daily resample plus lag/rolling step follows the original analysis
         # from the notebook, that date can end up appearing twice in a
         # split's index, once from each adjacent split's partial-day
         # aggregation (see that script's docstring). X and y come from the

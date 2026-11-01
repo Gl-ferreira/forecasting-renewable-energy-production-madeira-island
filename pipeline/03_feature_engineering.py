@@ -148,12 +148,10 @@ def main():
     # own (see daily_aggregate above), so the single day where train ends
     # and val begins, or val ends and test begins, has a partial day's
     # worth of hours on each side, and both partial-day rows end up
-    # sharing the same date label after the lag/rolling merge. That's
-    # inherited straight from the notebook's own combination of
-    # create_lag_rolling_features and resample('D'), not something this
-    # script introduces, but anything downstream that joins or merges on
-    # these frames by index rather than by position needs to know about
-    # it - see the note on _attach_target in 04_scale_and_select.py.
+    # sharing the same date label after the lag/rolling merge. The original
+    # analysis behaves the same way. Code that joins these frames by index
+    # rather than by position needs to account for it (see _attach_target
+    # in 04_scale_and_select.py).
     stats["train_daily_duplicate_dates"] = [
         str(d) for d in train_d.index[train_d.index.duplicated(keep=False)].unique()
     ]

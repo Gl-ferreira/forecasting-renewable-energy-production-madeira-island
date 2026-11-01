@@ -103,14 +103,14 @@ def merge_production_weather(production: pd.DataFrame, weather_data: pd.DataFram
     stats["production_duplicates_dropped"] = n_dup_production
     stats["weather_duplicates_dropped"] = n_dup_weather
 
-    # (b) rate -> "energy if sustained for an hour" for the 15-min slices,
+    # (b) 15-min power values (MW) x 0.25 h -> energy (MWh) per slice,
     # then resample 15-min -> hourly
     production = production.copy()
     production.loc[:, PRODUCTION_FLOW_COLS] = production[PRODUCTION_FLOW_COLS] * 0.25
     production_hourly = production.resample("h").agg(PRODUCTION_HOURLY_AGG)
     stats["production_hourly_rows_before_dst_fix"] = len(production_hourly)
 
-    # (c) resample-created NaN-metadata rows (the "4 extra rows" quirk)
+    # (c) resample-created NaN-metadata rows (hours with no 15-minute records)
     nan_date_rows = production_hourly.index[production_hourly["Date"].isna()]
     production_hourly = production_hourly.dropna(subset=["Date"])
     stats["dropped_nan_metadata_rows"] = len(nan_date_rows)

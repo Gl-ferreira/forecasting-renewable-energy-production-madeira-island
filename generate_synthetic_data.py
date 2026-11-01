@@ -138,7 +138,7 @@ def build_production(start="2021-01-01", end="2024-08-31 23:45", freq="15min"):
 
     # --- Fossil & Natural Gas: largely complementary to renewables (grid
     # balancing), giving the generator roughly the right inverse
-    # correlation with wind/hydropower without hand-tuning a copula.
+    # correlation with wind/hydropower.
     renew_total = hydropower + wind + solar + biomass
     fossil = np.clip(84.0 - 1.05 * renew_total + skewed_series(n, 0, 7.0, -0.04, RNG), 5, 120)
     natgas = np.clip(17.3 + skewed_series(n, 0, 5.8, 0.18, RNG), 0, 50)

@@ -34,7 +34,7 @@ The chart below compares synthetic and real monthly means. The synthetic data fo
 
 Because of this, every result this pipeline produces (feature importances, R², RMSE, MAE, SHAP values) comes from synthetic data and **will not match the numbers in the article**, which come from the confidential EEM and weather data. This repository lets a reader check that the methodology described in the article is implemented as described and runs end to end; it does not reproduce the article's findings.
 
-Why isn't the real data here instead? Two reasons:
+The real data are not included for two reasons:
 
 - **Production data**: it belongs to EEM, shared with me under a confidentiality arrangement for the thesis. EEM had no objection to the thesis becoming a journal article, but that did not extend to publishing the underlying data or the original analysis notebooks.
 - **Weather data**: pulled from the Visual Crossing Weather API. It isn't confidential, but its license prohibits republishing raw records in bulk, and the full historical pull used in the study is well beyond the API's free-tier query caps.
@@ -51,7 +51,7 @@ forecasting-renewable-energy-production-madeira-island/
 │   ├── synthetic_production.csv              # Synthetic EEM production, 15-min resolution
 │   ├── synthetic_weather_FW_Funchal.csv       # Synthetic weather, Funchal station, hourly
 │   ├── synthetic_weather_LPMA.csv             # Synthetic weather, LPMA station, hourly
-│   └── processed/                             # Output of pipeline/01-04 (generated, not checked in blank)
+│   └── processed/                             # Output of pipeline/01-04 (generated locally; only final/ is tracked in git)
 │       ├── <target>_{train,val,test,trainval,test_tv}.csv
 │       ├── <target>_xgb_importance.csv
 │       ├── scalers/                           # Fitted scikit-learn scalers (joblib)
@@ -93,11 +93,11 @@ The study evaluated LSTM, MLP, Random Forest and XGBoost over three rounds. LSTM
 
 ### 4.2 Environment notes
 
-`04_scale_and_select.py` and `05_train_final_models.py` use `xgboost` for feature selection and, for two of the four targets, for the final model. `05_train_final_models.py` also uses `shap` for the explainability plots. Both scripts fall back to pure scikit-learn equivalents (`GradientBoostingRegressor` in place of `XGBRegressor`, skipping the SHAP plot) if `xgboost`/`shap` aren't installed, and this always gets reported explicitly in the output (`xgboost_available`, `shap_available` flags) rather than failing silently. If you hit installation trouble with `xgboost`/`shap` in your own environment, `colab/synthetic_data_repo_real_xgboost.ipynb` is a ready-to-run Google Colab notebook that installs both and runs the full pipeline end to end. The committed results in `data/processed/` and `data/processed/final/` were produced this way.
+`04_scale_and_select.py` and `05_train_final_models.py` use `xgboost` for feature selection and, for two of the four targets, for the final model. `05_train_final_models.py` also uses `shap` for the explainability plots. Both scripts fall back to pure scikit-learn equivalents (`GradientBoostingRegressor` in place of `XGBRegressor`, skipping the SHAP plot) if `xgboost`/`shap` aren't installed, and this always gets reported explicitly in the output (`xgboost_available`, `shap_available` flags) instead of failing. If you have trouble installing `xgboost`/`shap`, `colab/synthetic_data_repo_real_xgboost.ipynb` is a Google Colab notebook that installs them and runs steps 01 to 04; run `pipeline/05_train_final_models.py` afterwards in the same session. The committed results in `data/processed/final/` were produced with `xgboost` and `shap` installed.
 
 ### 4.3 A note on feature selection results
 
-On the synthetic data, the automatic selection in `04_scale_and_select.py` picks `Fossil` and `Natural Gas` generation for Wind and Biomass (see `data/processed/<target>_xgb_importance.csv`). This comes from the synthetic generator, which drives all production columns with similar seasonal signals and so creates correlations between sources that are not physically meaningful. In the article, the final feature lists (Table 1) contain no non-renewable variables.
+On the synthetic data, the automatic selection in `04_scale_and_select.py` picks `Fossil` and `Natural Gas` generation for Wind and Biomass (written to `data/processed/<target>_xgb_importance.csv` when the pipeline runs). This comes from the synthetic generator, which drives all production columns with similar seasonal signals and so creates correlations between sources that are not physically meaningful. In the article, the final feature lists (Table 1) contain no non-renewable variables.
 
 ### 4.4 Sanity check: pipeline output on synthetic data
 
