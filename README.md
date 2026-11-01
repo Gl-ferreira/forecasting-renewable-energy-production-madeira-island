@@ -39,7 +39,7 @@ Why isn't the real data here instead? Two reasons:
 - **Production data**: it belongs to EEM, shared with me under a confidentiality arrangement for the thesis. EEM had no objection to the thesis becoming a journal article, but that did not extend to publishing the underlying data or the original analysis notebooks.
 - **Weather data**: pulled from the Visual Crossing Weather API. It isn't confidential, but its license prohibits republishing raw records in bulk, and the full historical pull used in the study is well beyond the API's free-tier query caps.
 
-Synthetic data avoid both problems and still let anyone run the pipeline. Each script's docstring states which section of the article it corresponds to.
+Synthetic data avoid both problems and still let anyone run the pipeline. Each script's docstring states which section of the article it corresponds to. The synthetic data generator and the public scripts were prepared with the assistance of Claude (Anthropic) and checked by the authors against the original analysis.
 
 ## 3. Repository structure
 
