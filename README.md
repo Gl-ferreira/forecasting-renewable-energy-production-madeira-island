@@ -26,7 +26,7 @@ The full thesis is open access: [NOVA RUN repository](https://run.unl.pt/entitie
 
 ## 2. Data
 
-None of the data under `data/` is real. `synthetic_production.csv` and the two `synthetic_weather_*.csv` files come out of `generate_synthetic_data.py`, a generator that mimics the structure of the real datasets (same columns, timestamps, diurnal patterns, skew and missing-value patterns) without containing any real record. It was calibrated with aggregate statistics only: installed capacity, monthly seasonal shapes and distributional properties profiled from the real data. The only real values in this repository are aggregates: the real monthly means in the chart below and the published results in section 5.
+None of the data under `data/` is real. `synthetic_production.csv` and the two `synthetic_weather_*.csv` files come out of `generate_synthetic_data.py`, a generator that mimics the structure of the real datasets (same columns, timestamps, diurnal patterns, skew and missing-value patterns) without containing any real record. It was calibrated with aggregate statistics only: installed capacity, monthly seasonal shapes and distributional properties profiled from the real data. The only real values in this repository are aggregates: the real monthly means in the chart below and the results reported in the manuscript (section 5).
 
 The chart below compares synthetic and real monthly means. The synthetic data follow solar closely and hydropower roughly (with too much production in summer), but they do not reproduce the seasonality of wind and biomass:
 
@@ -57,7 +57,7 @@ forecasting-renewable-energy-production-madeira-island/
 │       ├── scalers/                           # Fitted scikit-learn scalers (joblib)
 │       └── final/                             # Output of pipeline/05
 │           └── <target>/{model.joblib, metrics.json, line_chart.png, shap_beeswarm.png}
-├── real_results/                     # Real-data charts from the published manuscript (see section 5)
+├── real_results/                     # Real-data charts from the manuscript under review (see section 5)
 │   └── <target>/{line_chart.png, shap_beeswarm.png}
 ├── pipeline/
 │   ├── 01_merge_data.py              # Merge production + weather
@@ -101,7 +101,7 @@ On the synthetic data, the automatic selection in `04_scale_and_select.py` picks
 
 ### 4.4 Sanity check: pipeline output on synthetic data
 
-Running the pipeline on the synthetic data shows that it executes end to end and that each step produces output of the expected shape. The table below shows the results of that run (`data/processed/final/final_summary.csv`). These numbers have no scientific meaning: they depend on the synthetic generator and should not be compared with the article (section 5 has the published results).
+Running the pipeline on the synthetic data shows that it executes end to end and that each step produces output of the expected shape. The table below shows the results of that run (`data/processed/final/final_summary.csv`). These numbers have no scientific meaning: they depend on the synthetic generator and should not be compared with the article (section 5 has the manuscript's results).
 
 | Target | Model | R² | RMSE | MAE |
 |---|---|---|---|---|
